@@ -20,8 +20,8 @@ class FacePlus{
     #############################################
     ### set your api key and api secret here. ###
     #############################################
-    var $api_key = '673e296548d0bf1ee98af620d2fb2573';
-    var $api_secret = '79JaxdyWfkp5X0ktmP-5AsphU3Ddk8jj';
+    var $api_key = '*';
+    var $api_secret = '*';
 
     public function __construct($api_key=NULL, $api_secret=NULL, $server=NULL){
         if($api_key){
