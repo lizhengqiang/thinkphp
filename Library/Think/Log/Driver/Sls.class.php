@@ -16,10 +16,10 @@ use Aliyun\Sls\Models\Aliyun_Sls_Models_PutLogsRequest;
 class Sls {
   
     protected $endpoint = 'cn-hangzhou.sls.aliyuncs.com'; // 选择与上面步骤创建Project所属区域匹配的Endpoint
-    protected $accessKeyId = 'LVM80iQbT1Icz2Wi';        // 使用你的阿里云访问秘钥AccessKeyId
-    protected $accessKey = 'ke6fWx53kn2qxwgMbpUVta704nsiec';             // 使用你的阿里云访问秘钥AccessKeySecret
-    protected $project = 'mouge-muni-web';                  // 上面步骤创建的项目名称
-    protected $logstore = 'dev-runtime-access';                // 上面步骤创建的日志库名称
+    protected $accessKeyId = '*';        // 使用你的阿里云访问秘钥AccessKeyId
+    protected $accessKey = '*';             // 使用你的阿里云访问秘钥AccessKeySecret
+    protected $project = '*';                  // 上面步骤创建的项目名称
+    protected $logstore = '*';                // 上面步骤创建的日志库名称
     
     protected $config  =   array(
         'log_time_format'   =>  ' c ',
