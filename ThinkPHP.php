@@ -99,5 +99,15 @@ require CORE_PATH.'Think'.EXT;
 require LIB_PATH.'GuzzleHttp/Psr7/functions_include.php';
 require LIB_PATH.'GuzzleHttp/Promise/functions_include.php';
 
+if($_SERVER['HTTPS'] != "on"){
+  $_SERVER['REQUEST_SCHEME'] = "http";
+}else{
+  $_SERVER['REQUEST_SCHEME'] = "https";
+}
+
+if($_SERVER["HTTP_X_FORWARDED_PROTO"] == "https"){
+  $_SERVER['REQUEST_SCHEME'] = "https";
+}
+
 // 应用初始化 
 Think\Think::start();

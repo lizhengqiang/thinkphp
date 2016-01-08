@@ -32,12 +32,19 @@ class MnsController extends Controller {
 	
   
   // 向队列中发送一条将要执行某个请求的消息, 消息队列将回调我们控制器中的一个方法
-  public function MessageCall($ctrl, $method, $params){
-    $url = create_open_url('/' . $ctrl . '-' . $method . '-ep');
+  public function MessageCall($ctrl, $method, $params, $origin = ''){
+    if($origin === ''){
+      $url = createOpenUrl('/' . $ctrl . '/' . $method);
+    }else{
+      $url = $origin . '/' . $ctrl . '/' . $method;
+    }
+    
     
     $queueName = str_replace('://', '-', $url);
     $queueName = str_replace('/', '-', $queueName);
     $queueName = str_replace('.', '-', $queueName);
+    $queueName = str_replace('_', '-', $queueName);
+    
     
     $messageBody = array(
       'tag' => $queueName,
