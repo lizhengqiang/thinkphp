@@ -36,9 +36,7 @@ return array(
     'core'      =>  array(
         THINK_PATH.'Common/functions.php',
         COMMON_PATH.'Common/function.php',
-        LIB_PATH . 'GuzzleHttp/Psr7/functions_include.php',
-        LIB_PATH . 'GuzzleHttp/Promise/functions_include.php',
-        LIB_PATH . 'GuzzleHttp/functions_include.php',
+
         CORE_PATH . 'Hook'.EXT,
         CORE_PATH . 'App'.EXT,
         CORE_PATH . 'Dispatcher'.EXT,

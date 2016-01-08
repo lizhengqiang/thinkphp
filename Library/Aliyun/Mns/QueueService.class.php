@@ -25,6 +25,9 @@ class QueueService{
   private $client;
   
   public function __construct($accessId, $accessKey, $endPoint){
+    require(LIB_PATH . 'GuzzleHttp/Psr7/functions_include.php');
+    require(LIB_PATH . 'GuzzleHttp/Promise/functions_include.php');
+    require(LIB_PATH . 'GuzzleHttp/functions_include.php');
     $this->client = new Client($endPoint, $accessId, $accessKey);
   }
   
