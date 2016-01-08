@@ -1,5 +1,5 @@
 <?php
-namespace Org\Aliyun\Mns;
+namespace Aliyun\Mns;
 
 
 /**
@@ -15,7 +15,7 @@ class Mqs{
 	public $AccessKey		= '';
 	public $AccessSecret	= '';
 	public $CONTENT_TYPE	= 'text/xml;utf-8';
-	public $MQSHeaders		= '2014-07-08';
+	public $MQSHeaders		= '2015-06-06';
 	public $queueownerid	= '';
 	public $mqsurl			= '';
 	

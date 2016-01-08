@@ -170,42 +170,42 @@ class Queue extends Mqs{
 	//获取多个消息队列列表
 	public function ListQueue($prefix='',$number='',$marker=''){
 		$VERB = "GET";
-        $CONTENT_BODY = "" ;
-        $CONTENT_MD5 = base64_encode( md5( $CONTENT_BODY ) );
-        $CONTENT_TYPE = $this->CONTENT_TYPE;
-        $GMT_DATE = $this->getGMTDate();
-        $CanonicalizedMQSHeaders = array(
-            'x-mqs-version' => $this->MQSHeaders,
-        );
+    $CONTENT_BODY = "" ;
+    $CONTENT_MD5 = base64_encode( md5( $CONTENT_BODY ) );
+    $CONTENT_TYPE = $this->CONTENT_TYPE;
+    $GMT_DATE = $this->getGMTDate();
+    $CanonicalizedMQSHeaders = array(
+        'x-mqs-version' => $this->MQSHeaders,
+    );
 		
 		if($prefix!=''){$CanonicalizedMQSHeaders['x-mqs-prefix'] = $prefix;	}
 		if($number!=''){$CanonicalizedMQSHeaders['x-mqs-ret-number'] = $number;	}
 		if($marker!=''){$CanonicalizedMQSHeaders['x-mqs-marker'] = $marker;	}
 		
 		$RequestResource = "/";
-        $sign = $this->getSignature($VERB,$CONTENT_MD5,$CONTENT_TYPE,$GMT_DATE,$CanonicalizedMQSHeaders,$RequestResource);
+    $sign = $this->getSignature($VERB,$CONTENT_MD5,$CONTENT_TYPE,$GMT_DATE,$CanonicalizedMQSHeaders,$RequestResource);
 		$headers = array(
-            'Host' => $this->queueownerid.".".$this->mqsurl,
-            'Date' => $GMT_DATE,
-            'Content-Type' => $CONTENT_TYPE,
-            'Content-MD5' => $CONTENT_MD5
-        );
-        foreach( $CanonicalizedMQSHeaders as $k => $v){
-            $headers[ $k ] = $v;
-        }
-        $headers['Authorization'] = $sign;
+        'Host' => $this->queueownerid.".".$this->mqsurl,
+        'Date' => $GMT_DATE,
+        'Content-Type' => $CONTENT_TYPE,
+        'Content-MD5' => $CONTENT_MD5
+    );
+    foreach( $CanonicalizedMQSHeaders as $k => $v){
+        $headers[ $k ] = $v;
+    }
+    $headers['Authorization'] = $sign;
 		$request_uri = 'http://' . $this->queueownerid .'.'. $this->mqsurl . $RequestResource;
 		$data=$this->requestCore($request_uri,$VERB,$headers,$CONTENT_BODY);
 		//返回状态，正确返回ok,错误返回错误代码！
 		$error = $this->errorHandle($data[0]);
-        if($error){
+    if($error){
 			$msg['state']=$error;
 			$msg['msg']=$this->getXmlData($data[1]);
-        }else{
+    }else{
 			$msg['state']="ok";
 			$msg['msg']=$this->getXmlData($data[1]);
 		}
-		return $msg;
+    return $msg;
 	}	
 	//数据转换到xml
 	private function generatequeuexml($queue=array()){

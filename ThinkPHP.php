@@ -30,6 +30,7 @@ const URL_COMPAT        =   3;  // 兼容模式
 
 // 类文件后缀
 const EXT               =   '.class.php'; 
+const EXT_PHP           =   '.php'; 
 
 // 系统常量定义
 defined('THINK_PATH')   or define('THINK_PATH',     __DIR__.'/');
@@ -92,5 +93,11 @@ if(!IS_CLI) {
 
 // 加载核心Think类
 require CORE_PATH.'Think'.EXT;
+
+// 加载Guzzle类
+//require LIB_PATH.'GuzzleHttp/functions_include.php';
+require LIB_PATH.'GuzzleHttp/Psr7/functions_include.php';
+require LIB_PATH.'GuzzleHttp/Promise/functions_include.php';
+
 // 应用初始化 
 Think\Think::start();

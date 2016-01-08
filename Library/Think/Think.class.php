@@ -159,7 +159,14 @@ class Think {
               $namespace  =   C('AUTOLOAD_NAMESPACE');
               $path       =   isset($namespace[$name])? dirname($namespace[$name]).'/' : APP_PATH;
           }
+          
           $filename       =   $path . str_replace('\\', '/', $class) . EXT;
+          
+          // 兼容PHP后缀类库
+          if(!is_file($filename)){
+            $filename = $path . str_replace('\\', '/', $class) . EXT_PHP;
+          }
+          
           if(is_file($filename)) {
               // Win环境下面严格区分大小写
               if (IS_WIN && false === strpos(str_replace('/', '\\', realpath($filename)), $class . EXT)){
@@ -167,6 +174,8 @@ class Think {
               }
               include $filename;
           }
+          
+          
         }elseif (!C('APP_USE_NAMESPACE')) {
             // 自动加载的类库层
             foreach(explode(',',C('APP_AUTOLOAD_LAYER')) as $layer){
