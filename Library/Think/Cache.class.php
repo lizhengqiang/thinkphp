@@ -44,6 +44,7 @@ class Cache
         }
 
         $class = strpos($type, '\\') ? $type : 'Think\\Cache\\Driver\\' . ucwords(strtolower($type));
+      
         if (class_exists($class)) {
             $cache = new $class($options);
         } else {

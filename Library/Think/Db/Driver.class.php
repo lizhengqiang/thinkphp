@@ -106,9 +106,7 @@ abstract class Driver
                     // 禁用模拟预处理语句
                     $this->options[PDO::ATTR_EMULATE_PREPARES] = false;
                 }
-                
-                _log($config);
-                if(C('CONNECT_POOL') === true){
+                if(C('CONNECT_POOL') === true && $config['pool']){
                   $this->linkID[$linkNum] = new \pdo_connect_pool(array(
                     'master' => array(
                       'data_source' => $config['dsn'],
