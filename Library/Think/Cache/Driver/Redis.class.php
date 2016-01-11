@@ -123,8 +123,7 @@ class Redis extends Cache
      */
     public function set($name, $value, $expire = null)
     {
-      _log($this->options, 'set', 'Redis', 'CP');
-      _log($name . '->' . $value, 'set', 'Redis', 'CP');
+     
         N('cache_write', 1);
         
         if (is_null($expire)) {
@@ -133,6 +132,7 @@ class Redis extends Cache
         $name = $this->options['prefix'] . $name;
         //对数组/对象数据进行缓存处理，保证数据完整性
         $value = (is_object($value) || is_array($value)) ? json_encode($value) : $value;
+        
         if (is_int($expire) && $expire) {
             $result = $this->handler->setex($name, $expire, $value);
         } else {

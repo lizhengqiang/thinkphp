@@ -1012,8 +1012,36 @@ function S($name, $value='' , $options=null) {
  * @param mixed $options 缓存参数
  * @return mixed
  */
-function F($name, $value = '', $path = "/f-path/") {
-	return __S($path.$name, $value);
+function F($name, $value = '', $path = DATA_PATH) {
+	static $_cache = array();
+  $filename      = $path . $name . '.php';
+  if ('' !== $value) {
+      if (is_null($value)) {
+          // 删除缓存
+          if (false !== strpos($name, '*')) {
+              return false; // TODO
+          } else {
+              unset($_cache[$name]);
+              return Think\Storage::unlink($filename, 'F');
+          }
+      } else {
+          Think\Storage::put($filename, serialize($value), 'F');
+          // 缓存数据
+          $_cache[$name] = $value;
+          return null;
+      }
+  }
+  // 获取缓存数据
+  if (isset($_cache[$name])) {
+      return $_cache[$name];
+  }
+  if (Think\Storage::has($filename, 'F')) {
+      $value         = unserialize(Think\Storage::read($filename, 'F'));
+      $_cache[$name] = $value;
+  } else {
+      $value = false;
+  }
+  return $value;
 }
 
 function hRedisSet($name, $key = '', $value = '', $db = 'JAVA') {
