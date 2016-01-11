@@ -8,19 +8,16 @@
 // +----------------------------------------------------------------------
 // | Author: liu21st <liu21st@gmail.com>
 // +----------------------------------------------------------------------
-
 namespace Think\Db\Driver;
 
 use Think\Db\Driver;
 
 /**
- * Oracle数据库驱动
+ * Firebird数据库驱动
  */
-class Oracle extends Driver
+class Firebird extends Driver
 {
-
-    private $table       = '';
-    protected $selectSql = 'SELECT * FROM (SELECT thinkphp.*, rownum AS numrow FROM (SELECT  %DISTINCT% %FIELD% FROM %TABLE%%JOIN%%WHERE%%GROUP%%HAVING%%ORDER%) thinkphp ) %LIMIT%%COMMENT%';
+    protected $selectSql = 'SELECT %LIMIT% %DISTINCT% %FIELD% FROM %TABLE%%JOIN%%WHERE%%GROUP%%HAVING%%ORDER%';
 
     /**
      * 解析pdo连接的dsn信息
@@ -30,10 +27,7 @@ class Oracle extends Driver
      */
     protected function parseDsn($config)
     {
-        $dsn = 'oci:dbname=//' . $config['hostname'] . ($config['hostport'] ? ':' . $config['hostport'] : '') . '/' . $config['database'];
-        if (!empty($config['charset'])) {
-            $dsn .= ';charset=' . $config['charset'];
-        }
+        $dsn = 'firebird:dbname=' . $config['hostname'] . '/' . ($config['hostport'] ?: 3050) . ':' . $config['database'];
         return $dsn;
     }
 
@@ -42,7 +36,7 @@ class Oracle extends Driver
      * @access public
      * @param string $str  sql指令
      * @param boolean $fetchSql  不执行只是获取SQL
-     * @return integer
+     * @return mixed
      */
     public function execute($str, $fetchSql = false)
     {
@@ -59,11 +53,6 @@ class Oracle extends Driver
         if ($fetchSql) {
             return $this->queryStr;
         }
-        $flag = false;
-        if (preg_match("/^\s*(INSERT\s+INTO)\s+(\w+)\s+/i", $str, $match)) {
-            $this->table = C("DB_SEQUENCE_PREFIX") . str_ireplace(C("DB_PREFIX"), "", $match[2]);
-            $flag        = (boolean) $this->query("SELECT * FROM user_sequences WHERE sequence_name='" . strtoupper($this->table) . "'");
-        }
         //释放前次的查询结果
         if (!empty($this->PDOStatement)) {
             $this->free();
@@ -75,8 +64,7 @@ class Oracle extends Driver
         $this->debug(true);
         $this->PDOStatement = $this->_linkID->prepare($str);
         if (false === $this->PDOStatement) {
-            $this->error();
-            return false;
+            E($this->error());
         }
         foreach ($this->bind as $key => $val) {
             if (is_array($val)) {
@@ -93,9 +81,6 @@ class Oracle extends Driver
             return false;
         } else {
             $this->numRows = $this->PDOStatement->rowCount();
-            if ($flag || preg_match("/^\s*(INSERT\s+INTO|REPLACE\s+INTO)\s+/i", $str)) {
-                $this->lastInsID = $this->_linkID->lastInsertId();
-            }
             return $this->numRows;
         }
     }
@@ -106,37 +91,43 @@ class Oracle extends Driver
      */
     public function getFields($tableName)
     {
+        $this->initConnect(true);
         list($tableName) = explode(' ', $tableName);
-        $result          = $this->query("select a.column_name,data_type,decode(nullable,'Y',0,1) notnull,data_default,decode(a.column_name,b.column_name,1,0) pk "
-            . "from user_tab_columns a,(select column_name from user_constraints c,user_cons_columns col "
-            . "where c.constraint_name=col.constraint_name and c.constraint_type='P'and c.table_name='" . strtoupper($tableName)
-            . "') b where table_name='" . strtoupper($tableName) . "' and a.column_name=b.column_name(+)");
-        $info = array();
+        $sql             = 'SELECT RF.RDB$FIELD_NAME AS FIELD,RF.RDB$DEFAULT_VALUE AS DEFAULT1,RF.RDB$NULL_FLAG AS NULL1,TRIM(T.RDB$TYPE_NAME) || \'(\' || F.RDB$FIELD_LENGTH || \')\' as TYPE FROM RDB$RELATION_FIELDS RF LEFT JOIN RDB$FIELDS F ON (F.RDB$FIELD_NAME = RF.RDB$FIELD_SOURCE) LEFT JOIN RDB$TYPES T ON (T.RDB$TYPE = F.RDB$FIELD_TYPE) WHERE RDB$RELATION_NAME=UPPER(\'' . $tableName . '\') AND T.RDB$FIELD_NAME = \'RDB$FIELD_TYPE\' ORDER By RDB$FIELD_POSITION';
+        $result          = $this->query($sql);
+        $info            = array();
         if ($result) {
             foreach ($result as $key => $val) {
-                $info[strtolower($val['column_name'])] = array(
-                    'name'    => strtolower($val['column_name']),
-                    'type'    => strtolower($val['data_type']),
-                    'notnull' => $val['notnull'],
-                    'default' => $val['data_default'],
-                    'primary' => $val['pk'],
-                    'autoinc' => $val['pk'],
+                $info[trim($val['field'])] = array(
+                    'name'    => trim($val['field']),
+                    'type'    => $val['type'],
+                    'notnull' => (bool) (1 == $val['null1']), // 1表示不为Null
+                    'default' => $val['default1'],
+                    'primary' => false,
+                    'autoinc' => false,
                 );
             }
+        }
+        //获取主键
+        $sql     = 'select b.rdb$field_name as field_name from rdb$relation_constraints a join rdb$index_segments b on a.rdb$index_name=b.rdb$index_name where a.rdb$constraint_type=\'PRIMARY KEY\' and a.rdb$relation_name=UPPER(\'' . $tableName . '\')';
+        $rs_temp = $this->query($sql);
+        foreach ($rs_temp as $row) {
+            $info[trim($row['field_name'])]['primary'] = true;
         }
         return $info;
     }
 
     /**
-     * 取得数据库的表信息（暂时实现取得用户表信息）
+     * 取得数据库的表信息
      * @access public
      */
     public function getTables($dbName = '')
     {
-        $result = $this->query("select table_name from user_tables");
+        $sql    = 'SELECT DISTINCT RDB$RELATION_NAME FROM RDB$RELATION_FIELDS WHERE RDB$SYSTEM_FLAG=0';
+        $result = $this->query($sql);
         $info   = array();
         foreach ($result as $key => $val) {
-            $info[$key] = current($val);
+            $info[$key] = trim(current($val));
         }
         return $info;
     }
@@ -149,12 +140,13 @@ class Oracle extends Driver
      */
     public function escapeString($str)
     {
-        return str_ireplace("'", "''", $str);
+        return str_replace("'", "''", $str);
     }
 
     /**
      * limit
      * @access public
+     * @param $limit limit表达式
      * @return string
      */
     public function parseLimit($limit)
@@ -163,27 +155,12 @@ class Oracle extends Driver
         if (!empty($limit)) {
             $limit = explode(',', $limit);
             if (count($limit) > 1) {
-                $limitStr = "(numrow>" . $limit[0] . ") AND (numrow<=" . ($limit[0] + $limit[1]) . ")";
+                $limitStr = ' FIRST ' . $limit[1] . ' SKIP ' . $limit[0] . ' ';
             } else {
-                $limitStr = "(numrow>0 AND numrow<=" . $limit[0] . ")";
+                $limitStr = ' FIRST ' . $limit[0] . ' ';
             }
-
         }
-        return $limitStr ? ' WHERE ' . $limitStr : '';
-    }
-
-    /**
-     * 设置锁机制
-     * @access protected
-     * @return string
-     */
-    protected function parseLock($lock = false)
-    {
-        if (!$lock) {
-            return '';
-        }
-
-        return ' FOR UPDATE NOWAIT ';
+        return $limitStr;
     }
 
     /**
@@ -193,6 +170,7 @@ class Oracle extends Driver
      */
     protected function parseRand()
     {
-        return 'DBMS_RANDOM.value';
+        return 'rand()';
     }
+
 }

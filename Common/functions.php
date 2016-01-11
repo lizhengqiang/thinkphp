@@ -1043,27 +1043,32 @@ function hRedis($name, $key = '', $db = 'JAVA') {
 }
 
 function __S($name, $value = '', $options = null ) {
-    // static $cache   =   '';
-    if(is_array($options) && empty($cache)){
+    static $cache = '';
+    if (is_array($options)) {
         // 缓存操作的同时初始化
-        $type       =   isset($options['type'])?$options['type']:'';
-        $cache      =   Think\Cache::getInstance($type,$options);
-    }elseif(is_array($name)) { // 缓存初始化
-        $type       =   isset($name['type'])?$name['type']:'';
-        $cache      =   Think\Cache::getInstance($type,$name);
+        $type  = isset($options['type']) ? $options['type'] : '';
+        $cache = Think\Cache::getInstance($type, $options);
+    } elseif (is_array($name)) {
+        // 缓存初始化
+        $type  = isset($name['type']) ? $name['type'] : '';
+        $cache = Think\Cache::getInstance($type, $name);
         return $cache;
-    }elseif(empty($cache)) { // 自动初始化
-        $cache      =   Think\Cache::getInstance();
+    } elseif (empty($cache)) {
+        // 自动初始化
+        $cache = Think\Cache::getInstance();
     }
-    if(''=== $value){ // 获取缓存
+    if ('' === $value) {
+        // 获取缓存
         return $cache->get($name);
-    }elseif(is_null($value)) { // 删除缓存
+    } elseif (is_null($value)) {
+        // 删除缓存
         return $cache->rm($name);
-    }else { // 缓存数据
-        if(is_array($options)) {
-            $expire     =   isset($options['expire'])?$options['expire']:NULL;
-        }else{
-            $expire     =   is_numeric($options)?$options:NULL;
+    } else {
+        // 缓存数据
+        if (is_array($options)) {
+            $expire = isset($options['expire']) ? $options['expire'] : null;
+        } else {
+            $expire = is_numeric($options) ? $options : null;
         }
         return $cache->set($name, $value, $expire);
     }
