@@ -46,7 +46,7 @@ class Redis extends Cache
           $func = "connect";
           $this->handler  = new \redis_connect_pool();
           _log($options, '__constrcut/cp', 'Redis', 'INFO');
-          _log(get_disable_list('/etc/poo.ini',CP_DEFAULT_REDIS_PORT));
+          _log(get_disable_list('/etc/pool.ini',CP_DEFAULT_REDIS_PORT));
           
         }else{
           $func                    = $options['persistent'] ? 'pconnect' : 'connect';
