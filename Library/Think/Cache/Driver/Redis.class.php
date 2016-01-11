@@ -47,19 +47,20 @@ class Redis extends Cache
           $this->handler  = new \redis_connect_pool();
           _log($options, '__constrcut/cp', 'Redis', 'INFO');
           _log(get_disable_list('/etc/pool.ini',CP_DEFAULT_REDIS_PORT));
+          _log("POOL_POOL".sha1(json_encode($options)), '__construct', 'Redis', 'CP');
           
         }else{
           $func                    = $options['persistent'] ? 'pconnect' : 'connect';
           $this->handler           = new \Redis;
-         
+         _log("POOL_NO_POOL", '__construct', 'Redis', 'CP');
         }
         
         false === $options['timeout'] ? $this->handler->$func($options['host'], $options['port']) : $this->handler->$func($options['host'], $options['port'], $options['timeout']);
         if ('' != $options['password']) {
             $this->handler->auth($options['password']);
+        }else{
         }
         
-        _log($options, '__construct', 'Redis', 'CP');
     }
     
     /**
@@ -105,10 +106,15 @@ class Redis extends Cache
      */
     public function get($name)
     {
-      _log($this->options, 'get', 'Redis', 'CP');
-      _log($name, 'get', 'Redis', 'CP');
         N('cache_read', 1);
         $value    = $this->handler->get($this->options['prefix'] . $name);
+        $jsonData = json_decode($value, true);
+        return (null === $jsonData) ? $value : $jsonData; //检测是否为JSON数据 true 返回JSON解析数组, false返回源数据
+    }
+    
+    public function liteGet($name){
+        N('cache_read', 1);
+        $value    = $this->handler->get($name);
         $jsonData = json_decode($value, true);
         return (null === $jsonData) ? $value : $jsonData; //检测是否为JSON数据 true 返回JSON解析数组, false返回源数据
     }

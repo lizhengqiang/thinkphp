@@ -1019,6 +1019,10 @@ function S($name, $value = '', $options = null)
     }
     if ('' === $value) {
         // 获取缓存
+        if(strpos($name, "lite::") !== FALSE){
+          $name = str_replace("lite::", "", $name);
+          return $cache->liteGet($name);
+        }
         return $cache->get($name);
     } elseif (is_null($value)) {
         // 删除缓存
@@ -1042,6 +1046,7 @@ function S($name, $value = '', $options = null)
  * @return mixed
  */
 function F($name, $value = '', $path = DATA_PATH) {
+  _log('F'.$name.json_encode($value), 'F', 'functions', 'CP');
 	static $_cache = array();
   $filename      = $path . $name . '.php';
   if ('' !== $value) {
@@ -1074,6 +1079,7 @@ function F($name, $value = '', $path = DATA_PATH) {
 }
 
 function hRedisSet($name, $key = '', $value = '', $db = 'JAVA') {
+  _log('hRedisSet'.$name.json_encode($value), 'hRedisSet', 'functions', 'CP');
     static $cache   =   '';
     $options = C("REDIS.".$db);
     if(is_array($options) && empty($cache)){
@@ -1086,6 +1092,7 @@ function hRedisSet($name, $key = '', $value = '', $db = 'JAVA') {
 }
 
 function hRedis($name, $key = '', $db = 'JAVA') {
+_log('hRedis'.$name.json_encode($value), 'hRedis', 'functions', 'CP');
     static $cache   =   '';
     $options = C("REDIS.".$db);
     if(is_array($options) && empty($cache)){
@@ -1100,6 +1107,7 @@ function hRedis($name, $key = '', $db = 'JAVA') {
 }
 
 function __S($name, $value = '', $options = null ) {
+  _log('__S'.$name.json_encode($value), '__S', 'functions', 'CP');
     static $cache = '';
     if (is_array($options)) {
         // 缓存操作的同时初始化

@@ -75,6 +75,7 @@ class Model
     {
         // 模型初始化
         $this->_initialize();
+      
         // 获取模型名称
         if (!empty($name)) {
             if (strpos($name, '.')) {
@@ -115,6 +116,7 @@ class Model
             // 如果数据表字段没有定义则自动获取
             if (C('DB_FIELDS_CACHE')) {
                 $fields = F('_fields/' . strtolower($this->getTableName()));
+                
                 if ($fields) {
                     $this->fields = $fields;
                     if (!empty($fields['_pk'])) {

@@ -95,10 +95,6 @@ if(!IS_CLI) {
 require CORE_PATH.'Think'.EXT;
 
 // 加载Guzzle类
-//require LIB_PATH.'GuzzleHttp/functions_include.php';
-require LIB_PATH.'GuzzleHttp/Psr7/functions_include.php';
-require LIB_PATH.'GuzzleHttp/Promise/functions_include.php';
-
 if($_SERVER['HTTPS'] != "on"){
   $_SERVER['REQUEST_SCHEME'] = "http";
 }else{
