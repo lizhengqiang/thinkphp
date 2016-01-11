@@ -99,6 +99,7 @@ class Db
                 'slave_no'    => C('DB_SLAVE_NO'),
                 'debug'       => C('DB_DEBUG', null, APP_DEBUG),
                 'lite'        => C('DB_LITE'),
+                'pool'        => C('DB_POOL'),
             );
         }
         return $config;
