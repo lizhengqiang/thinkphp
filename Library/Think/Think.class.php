@@ -44,6 +44,7 @@ class Think
         if (!APP_DEBUG && Storage::has($runtimefile)) {
             Storage::load($runtimefile);
         } else {
+          
             if (Storage::has($runtimefile)) {
                 Storage::unlink($runtimefile);
             }

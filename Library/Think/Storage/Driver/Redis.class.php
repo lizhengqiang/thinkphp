@@ -13,7 +13,7 @@ namespace Think\Storage\Driver;
 use Think\Storage;
 
 // SAE环境文件写入存储类
-class Sae extends Storage
+class Redis extends Storage
 {
 
     /**
@@ -26,15 +26,7 @@ class Sae extends Storage
     private $contents = array();
     public function __construct()
     {
-        if (!function_exists('memcache_init')) {
-            header('Content-Type:text/html;charset=utf-8');
-            exit('请在SAE平台上运行代码。');
-        }
-        $this->mc = @memcache_init();
-        if (!$this->mc) {
-            header('Content-Type:text/html;charset=utf-8');
-            exit('您未开通Memcache服务，请在SAE管理平台初始化Memcache服务');
-        }
+        
     }
 
     /**
@@ -43,13 +35,23 @@ class Sae extends Storage
     private function getKv()
     {
         static $kv;
-        if (!$kv) {
-            $kv = new \SaeKV();
-            if (!$kv->init()) {
-                E('您没有初始化KVDB，请在SAE管理平台初始化KVDB服务');
-            }
-
+        
+        $options = array(
+            'host'       => REDIS_HOST,
+            'port'       => REDIS_PORT,
+            'auth'       => REDIS_AUTH,
+        );
+        
+        if(PHP_CP === true){
+          $kv  = new \redis_connect_pool();
+        }else{
+          $kv = new \Redis;
         }
+        
+        $kv->connect($options['host'], $options['port']);
+        
+        $kv->auth($options['auth']);
+       
         return $kv;
     }
 
@@ -61,9 +63,11 @@ class Sae extends Storage
      */
     public function read($filename, $type = '')
     {
+     
         switch (strtolower($type)) {
             case 'f':
                 $kv = $this->getKv();
+                
                 if (!isset($this->kvs[$filename])) {
                     $this->kvs[$filename] = $kv->get($filename);
                 }
@@ -93,8 +97,10 @@ class Sae extends Storage
                 $this->htmls[$filename] = $content;
                 return $kv->set($filename, $content);
             default:
+            
                 $content = time() . $content;
-                if (!$this->mc->set($filename, $content, MEMCACHE_COMPRESSED, 0)) {
+                $kv = $this->getKv();
+                if (!$kv->set($filename, $content)) {
                     E(L('_STORAGE_WRITE_ERROR_') . ':' . $filename);
                 } else {
                     $this->contents[$filename] = $content;
@@ -142,6 +148,8 @@ class Sae extends Storage
      */
     public function has($filename, $type = '')
     {
+      
+       
         if ($this->read($filename, $type)) {
             return true;
         } else {
@@ -168,7 +176,8 @@ class Sae extends Storage
                 return $kv->delete($filename);
             default:
                 unset($this->contents[$filename]);
-                return $this->mc->delete($filename);
+                $kv = $this->getKv();
+                return $kv->delete($filename);
         }
     }
 
@@ -191,7 +200,8 @@ class Sae extends Storage
                 break;
             default:
                 if (!isset($this->contents[$filename])) {
-                    $this->contents[$filename] = $this->mc->get($filename);
+                    $kv                         = $this->getKv();
+                    $this->contents[$filename]  = $kv->get($filename);
                 }
                 $content = $this->contents[$filename];
         }
