@@ -1047,6 +1047,7 @@ function S($name, $value = '', $options = null)
  */
 function F($name, $value = '', $path = DATA_PATH) {
   return S('F/'.$path.'/'.$name, $value);
+
 /*
   static $cache = '';
     if (is_array($options)) {
@@ -1082,6 +1083,7 @@ function F($name, $value = '', $path = DATA_PATH) {
         return $cache->set($name, $value, $expire);
     }
 */
+
 /*
 	static $_cache = array();
   $filename      = $path . $name . '.php';
