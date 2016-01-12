@@ -67,7 +67,11 @@ class Redis
      */
     public function read($sessID)
     {
-        return $this->handle->get($this->prefix.$this->sessionName . $sessID);
+        $sessData = $this->handle->get($this->prefix.$this->sessionName . $sessID);
+        _log($this->prefix.'::'.$sessID.'->'.$sessData, 'read', 'Session::Redis', 'INFO');
+        $sessData = $this->prefix . '|' . serialize(json_decode($sessData, true));
+        _log($this->prefix.'::'.$sessID.'->'.$sessData, 'read', 'Session::Redis', 'INFO');
+        return $sessData;
     }
 
     /**
@@ -78,6 +82,9 @@ class Redis
      */
     public function write($sessID, $sessData)
     {
+      _log($this->prefix.'::'.$sessID.'->'.$sessData, 'write', 'Session::Redis', 'INFO');
+      $sessData = json_encode(unserialize(substr($sessData, strpos($sessData, '|') + 1)));
+      _log($this->prefix.'::'.$sessID.'->'.$sessData, 'write', 'Session::Redis', 'INFO');
       $result = $this->handle->setex($this->prefix.$this->sessionName . $sessID, $this->lifeTime, $sessData);
       return $result;
     }
