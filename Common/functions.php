@@ -1046,6 +1046,8 @@ function S($name, $value = '', $options = null)
  * @return mixed
  */
 function F($name, $value = '', $path = DATA_PATH) {
+  return S('F/'.$path.'/'.$name, $value);
+  
   _log('F'.$name.json_encode($value), 'F', 'functions', 'CP');
 	static $_cache = array();
   $filename      = $path . $name . '.php';
