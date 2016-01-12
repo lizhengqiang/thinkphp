@@ -1046,7 +1046,7 @@ function S($name, $value = '', $options = null)
  * @return mixed
  */
 function F($name, $value = '', $path = DATA_PATH) {
-  return S('F/'.$path.'/'.$name, $value);
+  //return S('F/'.$path.'/'.$name, $value);
 
 /*
   static $cache = '';
@@ -1084,7 +1084,7 @@ function F($name, $value = '', $path = DATA_PATH) {
     }
 */
 
-/*
+
 	static $_cache = array();
   $filename      = $path . $name . '.php';
   if ('' !== $value) {
@@ -1114,7 +1114,7 @@ function F($name, $value = '', $path = DATA_PATH) {
       $value = false;
   }
   return $value;
-*/
+
 }
 
 function hRedisSet($name, $key = '', $value = '', $db = 'JAVA') {
