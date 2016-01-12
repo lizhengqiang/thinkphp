@@ -1047,8 +1047,42 @@ function S($name, $value = '', $options = null)
  */
 function F($name, $value = '', $path = DATA_PATH) {
   return S('F/'.$path.'/'.$name, $value);
-  
-  _log('F'.$name.json_encode($value), 'F', 'functions', 'CP');
+/*
+  static $cache = '';
+    if (is_array($options)) {
+        // 缓存操作的同时初始化
+        $type  = isset($options['type']) ? $options['type'] : '';
+        $cache = Think\Cache::getInstance($type, $options);
+    } elseif (is_array($name)) {
+        // 缓存初始化
+        $type  = isset($name['type']) ? $name['type'] : '';
+        $cache = Think\Cache::getInstance($type, $name);
+        return $cache;
+    } elseif (empty($cache)) {
+        // 自动初始化
+        $cache = Think\Cache::getInstance();
+    }
+    if ('' === $value) {
+        // 获取缓存
+        if(strpos($name, "lite::") !== FALSE){
+          $name = str_replace("lite::", "", $name);
+          return $cache->liteGet($name);
+        }
+        return $cache->get($name);
+    } elseif (is_null($value)) {
+        // 删除缓存
+        return $cache->rm($name);
+    } else {
+        // 缓存数据
+        if (is_array($options)) {
+            $expire = isset($options['expire']) ? $options['expire'] : null;
+        } else {
+            $expire = is_numeric($options) ? $options : null;
+        }
+        return $cache->set($name, $value, $expire);
+    }
+*/
+/*
 	static $_cache = array();
   $filename      = $path . $name . '.php';
   if ('' !== $value) {
@@ -1078,6 +1112,7 @@ function F($name, $value = '', $path = DATA_PATH) {
       $value = false;
   }
   return $value;
+*/
 }
 
 function hRedisSet($name, $key = '', $value = '', $db = 'JAVA') {
