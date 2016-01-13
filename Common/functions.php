@@ -1225,6 +1225,10 @@ function S($name, $value = '', $options = null)
     }
     if ('' === $value) {
         // 获取缓存
+        if(strpos($name, "lite::") !== FALSE){
+          $name = str_replace("lite::", "", $name);
+          return $cache->liteGet($name);
+        }
         return $cache->get($name);
     } elseif (is_null($value)) {
         // 删除缓存
