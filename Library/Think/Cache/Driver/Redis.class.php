@@ -45,16 +45,11 @@ class Redis extends Cache
         if(C('CONNECT_POOL') === true){
           $func = "connect";
           $this->handler  = new \redis_connect_pool();
-          _log($options, '__constrcut/cp', 'Redis', 'INFO');
-          _log(get_disable_list('/etc/pool.ini',CP_DEFAULT_REDIS_PORT));
-          _log("POOL_POOL".sha1(json_encode($options)), '__construct', 'Redis', 'CP');
           
         }else{
           $func                    = $options['persistent'] ? 'pconnect' : 'connect';
           $this->handler           = new \Redis;
-         _log("POOL_NO_POOL", '__construct', 'Redis', 'CP');
         }
-        
         false === $options['timeout'] ? $this->handler->$func($options['host'], $options['port']) : $this->handler->$func($options['host'], $options['port'], $options['timeout']);
         if ('' != $options['password']) {
             $this->handler->auth($options['password']);
