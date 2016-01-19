@@ -32,7 +32,7 @@ class MnsController extends Controller {
 	
   
   // 向队列中发送一条将要执行某个请求的消息, 消息队列将回调我们控制器中的一个方法
-  public function MessageCall($ctrl, $method, $params, $origin = ''){
+  public function MessageCall($ctrl, $method, $params, $origin = '', $post = false){
     if($origin === ''){
       $url = createOpenUrl('/' . $ctrl . '/' . $method);
     }else{
@@ -45,15 +45,27 @@ class MnsController extends Controller {
     $queueName = str_replace('.', '-', $queueName);
     $queueName = str_replace('_', '-', $queueName);
     
+    if($post){
+      $messageBody = array(
+        'tag' => $queueName,
+        'method' => 'post',
+        'url' => $url,
+        'data' => http_build_query($params),
+      );
+    }else{
+      $messageBody = array(
+        'tag' => $queueName,
+        'method' => 'get',
+        'url' => $url . '?' . http_build_query($params)
+      );
+    }
     
-    $messageBody = array(
-      'tag' => $queueName,
-      'method' => 'get',
-      'url' => $url . '?' . http_build_query($params)
-    );
+    
     $this->params[sha1(json_encode($messageBody))] = $messageBody; 
     $this->SendMessage($messageBody, $queueName);
   }
+  
+  
   
   
   public function SendMessage($messageBody, $queueName){
