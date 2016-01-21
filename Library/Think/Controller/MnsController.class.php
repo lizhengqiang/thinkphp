@@ -50,7 +50,11 @@ class MnsController extends Controller {
         'tag' => $queueName,
         'method' => 'post',
         'url' => $url,
+<<<<<<< HEAD
         'data' => $params,
+=======
+        'data' => http_build_query($params),
+>>>>>>> 24cf8473d39dbb5fdb6ad2c6ba332ae1d9c9167c
       );
     }else{
       $messageBody = array(
