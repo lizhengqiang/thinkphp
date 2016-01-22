@@ -28,8 +28,6 @@ class MnsController extends Controller {
 	{
   	$this->queueService = new QueueService(C('ALIYUN.ACCESS_ID'), C('ALIYUN.ACCESS_KEY'), C('ALIYUN.MNS')['queue']["endPoint"]);
 	}
-	
-	
   
   // 向队列中发送一条将要执行某个请求的消息, 消息队列将回调我们控制器中的一个方法
   public function MessageCall($ctrl, $method, $params, $origin = '', $post = false){
@@ -39,8 +37,8 @@ class MnsController extends Controller {
       $url = $origin . '/' . $ctrl . '/' . $method;
     }
     
-    
-    $queueName = str_replace('://', '-', $url);
+    $queueName = substr($url, 0, strpos($url, '?'));
+    $queueName = str_replace('://', '-', $queueName);
     $queueName = str_replace('/', '-', $queueName);
     $queueName = str_replace('.', '-', $queueName);
     $queueName = str_replace('_', '-', $queueName);
@@ -50,11 +48,7 @@ class MnsController extends Controller {
         'tag' => $queueName,
         'method' => 'post',
         'url' => $url,
-<<<<<<< HEAD
-        'data' => $params,
-=======
-        'data' => http_build_query($params),
->>>>>>> 24cf8473d39dbb5fdb6ad2c6ba332ae1d9c9167c
+        'data' => urlencode($params),
       );
     }else{
       $messageBody = array(
