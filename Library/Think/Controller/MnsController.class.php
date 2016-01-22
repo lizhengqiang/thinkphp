@@ -36,8 +36,12 @@ class MnsController extends Controller {
     }else{
       $url = $origin . '/' . $ctrl . '/' . $method;
     }
+    if(strpos($url, '?') !== FALSE){
+      $queueName = substr($url, 0, strpos($url, '?'));
+    }else{
+      $queueName = $url;
+    }
     
-    $queueName = substr($url, 0, strpos($url, '?'));
     $queueName = str_replace('://', '-', $queueName);
     $queueName = str_replace('/', '-', $queueName);
     $queueName = str_replace('.', '-', $queueName);
