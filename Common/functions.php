@@ -1264,7 +1264,12 @@ function S($name, $value = '', $option = null)
       if (is_null($expire)) {
           $expire = $options['expire'];
       }
-      $name = $options['prefix'] . $name;
+      // 获取缓存
+      if(strpos($name, "lite::") !== FALSE){
+        $name = str_replace("lite::", "", $name);
+      }else{
+        $name = $options['prefix'] . $name;
+      }
       //对数组/对象数据进行缓存处理，保证数据完整性
       $value = (is_object($value) || is_array($value)) ? json_encode($value) : $value;
       
