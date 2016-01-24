@@ -1207,8 +1207,81 @@ function redirect($url, $time = 0, $msg = '')
  * @param mixed $options 缓存参数
  * @return mixed
  */
-function S($name, $value = '', $options = null)
+function S($name, $value = '', $option = null)
 {
+  
+  $options = array(
+      'host'       => C('REDIS_HOST') ?: '127.0.0.1',
+      'port'       => C('REDIS_PORT') ?: 6379,
+      'password'   => C('REDIS_PASSWORD') ?: '',
+      'timeout'    => C('DATA_CACHE_TIMEOUT') ?: false,
+      'persistent' => false,
+  );
+  
+  
+
+  $options           = $options;
+  $options['expire'] = isset($options['expire']) ? $options['expire'] : C('DATA_CACHE_TIME');
+  $options['prefix'] = isset($options['prefix']) ? $options['prefix'] : C('DATA_CACHE_PREFIX');
+  $options['length'] = isset($options['length']) ? $options['length'] : 0;
+
+  if(C('CONNECT_POOL') === true){
+    $func = "connect";
+    $redis            = new \redis_connect_pool();
+  }else{
+    $func             = $options['persistent'] ? 'pconnect' : 'connect';
+    $redis            = new \Redis;
+    
+  }
+  false === $options['timeout'] ? $redis->$func($options['host'], $options['port']) : $redis->$func($options['host'], $options['port'], $options['timeout']);
+  
+  
+  
+  if ('' != $options['password']) {
+      $redis->auth($options['password']);
+  }
+  
+  if ('' === $value) {
+      // 获取缓存
+      if(strpos($name, "lite::") !== FALSE){
+        $name = str_replace("lite::", "", $name);
+      }else{
+        $name = $options['prefix'] . $name;
+      }
+      $value    = $redis->get($name);
+      $jsonData = json_decode($value, true);
+      $result = (null === $jsonData) ? $value : $jsonData; //检测是否为JSON数据 true 返回JSON解析数组, false返回源数据
+  } elseif (is_null($value)) {
+      // 删除缓存
+      $result = $redis->delete($options['prefix'] . $name);
+  } else {
+      // 缓存数据
+      if (is_array($option)) {
+          $expire = isset($option['expire']) ? $option['expire'] : null;
+      } else {
+          $expire = is_numeric($option) ? $option : null;
+      }
+      if (is_null($expire)) {
+          $expire = $options['expire'];
+      }
+      $name = $options['prefix'] . $name;
+      //对数组/对象数据进行缓存处理，保证数据完整性
+      $value = (is_object($value) || is_array($value)) ? json_encode($value) : $value;
+      
+      if (is_int($expire) && $expire) {
+          $result = $redis->setex($name, $expire, $value);
+      } else {
+          $result = $redis->set($name, $value);
+      }
+      
+  }
+  
+  if(C('CONNECT_POOL') === true){
+    $redis->release();
+  }
+  
+  return $result;
+  
     static $cache = '';
     if (is_array($options)) {
         // 缓存操作的同时初始化

@@ -93,6 +93,7 @@ abstract class Driver
      */
     public function connect($config = '', $linkNum = 0, $autoConnection = false)
     {
+      
         if (!isset($this->linkID[$linkNum])) {
             if (empty($config)) {
                 $config = $this->config;
@@ -107,13 +108,31 @@ abstract class Driver
                     $this->options[PDO::ATTR_EMULATE_PREPARES] = false;
                 }
                 if(C('CONNECT_POOL') === true && $config['pool']){
-                  $this->linkID[$linkNum] = new \pdo_connect_pool(array(
-                    'master' => array(
-                      'data_source' => $config['dsn'],
-                      'username' => $config['username'],
-                      'pwd' => $config['password']
-                    )
-                  ));
+                  $confs = array(
+                      'slave' => array(
+                      ),
+                  );
+                  $dsns = split(',', $config['dsn']);
+                  foreach($dsns as $index => $dsn){
+                    $conf = array(
+                        'data_source' => $dsn,
+                        'username' => $config['username'],
+                        'pwd' => $config['password'],
+                        'options' => array(
+                           PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,
+                           PDO::ATTR_TIMEOUT => 3,
+                        ),
+                    );
+                    if($index === 0){
+                      $confs['master'] = $conf;
+                    }else{
+                      $confs['slave'][''.$index] = $conf;
+                    }
+                  }
+                  
+                  $this->linkID[$linkNum] = new \pdo_connect_pool($confs);
+                  _log($linkNum . ':' . json_encode($this->config) . '->' . json_encode($confs) , 'connect', 'Db::Driver', 'CP');
+
                 }else{
                   $this->linkID[$linkNum] = new PDO($config['dsn'], $config['username'], $config['password'], $this->options);
                 }
@@ -170,8 +189,10 @@ abstract class Driver
         if ($fetchSql) {
             return $this->queryStr;
         }
+        _log($this->queryStr, 'query', 'Db::Driver', 'CP');
         //释放前次的查询结果
         if (!empty($this->PDOStatement)) {
+            _log('free PDO statement', 'query', 'Db::Driver', 'CP');
             $this->free();
         }
 
@@ -179,7 +200,9 @@ abstract class Driver
         N('db_query', 1); // 兼容代码
         // 调试开始
         $this->debug(true);
+        _log('before prepare', 'query', 'Db::Driver', 'CP');
         $this->PDOStatement = $this->_linkID->prepare($str);
+        _log('after prepare', 'query', 'Db::Driver', 'CP');
         if (false === $this->PDOStatement) {
             $this->error();
             return false;
@@ -193,7 +216,9 @@ abstract class Driver
         }
         $this->bind = array();
         try {
+            _log('before execute', 'query', 'Db::Driver', 'CP');
             $result = $this->PDOStatement->execute();
+            _log('after execute:' . json_encode($result), 'query', 'Db::Driver', 'CP');
             // 调试结束
             $this->debug(false);
             if (false === $result) {
@@ -1199,6 +1224,7 @@ abstract class Driver
      */
     protected function initConnect($master = true)
     {
+      _log($master === true ? 'true' : 'false' . ':' . $this->config['deploy'], 'initConnect', 'Db::Driver', 'CP');
         if (!empty($this->config['deploy']))
         // 采用分布式数据库
         {
@@ -1270,6 +1296,7 @@ abstract class Driver
             'dsn'      => isset($_config['dsn'][$r]) ? $_config['dsn'][$r] : $_config['dsn'][0],
             'charset'  => isset($_config['charset'][$r]) ? $_config['charset'][$r] : $_config['charset'][0],
         );
+        _log(json_encode($db_config) . ':' . $r .','.$m, 'multiConnect', 'Db::Driver', 'CP');
         return $this->connect($db_config, $r, $r == $m ? false : $db_master);
     }
 
