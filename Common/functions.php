@@ -1209,7 +1209,7 @@ function redirect($url, $time = 0, $msg = '')
  */
 function S($name, $value = '', $option = null)
 {
-  
+/*
   $options = array(
       'host'       => C('REDIS_HOST') ?: '127.0.0.1',
       'port'       => C('REDIS_PORT') ?: 6379,
@@ -1286,6 +1286,7 @@ function S($name, $value = '', $option = null)
   }
   
   return $result;
+*/
   
     static $cache = '';
     if (is_array($options)) {
