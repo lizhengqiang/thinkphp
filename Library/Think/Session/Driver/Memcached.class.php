@@ -39,7 +39,10 @@ class Memcached
 
         $this->handle = new MemcachedResource(sha1($options));
         
+        
+        
         if(count($this->handle->getServerList()) == 0){
+          _log(json_encode($options), 'open', 'Session::Memcached', 'T');
           $options['servers'] && $this->handle->addServers($options['servers']);
           $options['lib_options'] && $this->handle->setOptions($options['lib_options']);
         }else{
