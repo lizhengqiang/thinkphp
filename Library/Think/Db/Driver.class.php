@@ -107,6 +107,9 @@ abstract class Driver
                     // 禁用模拟预处理语句
                     $this->options[PDO::ATTR_EMULATE_PREPARES] = false;
                 }
+                
+                _log($linkNum . ':' . json_encode($this->config) . '->' . json_encode($confs) , 'connect', 'Db::Driver', 'CP');
+
                 if(C('CONNECT_POOL') === true && $config['pool']){
                   $confs = array(
                       'slave' => array(
@@ -131,8 +134,7 @@ abstract class Driver
                   }
                   
                   $this->linkID[$linkNum] = new \pdo_connect_pool($confs);
-                  _log($linkNum . ':' . json_encode($this->config) . '->' . json_encode($confs) , 'connect', 'Db::Driver', 'CP');
-
+                  
                 }else{
                   $this->linkID[$linkNum] = new PDO($config['dsn'], $config['username'], $config['password'], $this->options);
                 }
