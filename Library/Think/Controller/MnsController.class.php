@@ -8,8 +8,58 @@ class MnsController extends Controller {
   
   private $params = array();
   
-  public function param($key, $value = '')
-  {
+  public function initializeParams($mixed){
+    $this->params = $mixed;
+  }
+  
+  public function P($key, $value = ''){
+    if($value === '') return $this->params[$key];
+    $this->params[$key] = $value;
+  }
+  
+  public function O($key, $value){
+		$paths = explode('.', $key);
+		$truth_key = $paths[0];
+		if(count($paths) > 1){
+			$json = $this->P($truth_key);
+			if(!is_array($json)) $json = array();
+			$temp = &$json;
+			$first = true;
+			//  路径迭代
+			foreach($paths as $path){
+				// 跳过第一个路径
+				if($first){
+					$first = false;
+					continue;
+				}
+				// 处理最后一个路径
+				if($path == end($paths)){
+					// 读操作
+					if(!isset($value))
+						return $temp[$path];
+					// 写操作
+					$temp[$path] = $value;
+					return $this->P($truth_key, $json);
+				}else{
+					// 迭代进入
+					if(!is_array($temp[$path])){
+						$temp[$path] = array();
+					}
+					$temp = &$temp[$path];
+				}
+			}
+		}else{
+			return $this->P($truth_key, $value);
+		}
+	}
+	
+	public function clear($params){
+  	foreach(split(",", $params) as $param){
+    	unset($this->params[$param]);
+  	}
+	}
+  
+  public function param($key, $value){
     if($value === '') return $this->params[$key];
     $this->params[$key] = $value;
   }
