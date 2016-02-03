@@ -15,6 +15,7 @@ class Memcached
      * @access public
      * @param string $savePath
      * @param mixed $sessName
+     * @return bool
      */
     public function open($savePath, $sessName)
     {
@@ -67,6 +68,7 @@ class Memcached
      * 读取Session
      * @access public
      * @param string $sessID
+     * @return mixed
      */
     public function read($sessID)
     {
@@ -103,6 +105,7 @@ class Memcached
      * Session 垃圾回收
      * @access public
      * @param string $sessMaxLifeTime
+     * @return bool
      */
     public function gc($sessMaxLifeTime)
     {
