@@ -13,6 +13,8 @@ class MnsController extends Controller
     public function initializeParams($mixed)
     {
         $this->params = $mixed;
+        $this->clear('code');
+        $this->clear('msg');
     }
 
     public function P($key, $value = '')
@@ -60,7 +62,7 @@ class MnsController extends Controller
 
     public function clear($params)
     {
-        foreach (split(",", $params) as $param) {
+        foreach (explode(",", $params) as $param) {
             unset($this->params[$param]);
         }
     }
@@ -83,8 +85,9 @@ class MnsController extends Controller
      * 快速返回结果
      * @param int $errcode
      * @param string $errmsg
+     * @param array $data
      */
-    public function e($errcode = 0, $errmsg = 'ok')
+    public function e($errcode = 0, $errmsg = 'ok', $data = array())
     {
         if ($errcode === 200) {
             $errcode = 0;
@@ -92,7 +95,7 @@ class MnsController extends Controller
         $this->ajaxReturn(array(
             'code' => $errcode,
             'msg' => $errmsg,
-            'data' => $this->params,
+            'data' => empty($data) ? $this->params : $data,
         ));
         exit;
     }
