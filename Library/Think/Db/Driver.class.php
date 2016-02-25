@@ -65,7 +65,7 @@ abstract class Driver
     protected $executeTimes = 0;
     // PDO连接参数
     protected $options = array(
-        PDO::ATTR_CASE              => PDO::CASE_LOWER,
+        PDO::ATTR_CASE              => PDO::CASE_NATURAL,
         PDO::ATTR_ERRMODE           => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_ORACLE_NULLS      => PDO::NULL_NATURAL,
         PDO::ATTR_STRINGIFY_FETCHES => false,
@@ -121,10 +121,7 @@ abstract class Driver
                         'data_source' => $dsn,
                         'username' => $config['username'],
                         'pwd' => $config['password'],
-                        'options' => array(
-                           PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,
-                           PDO::ATTR_TIMEOUT => 3,
-                        ),
+                        'options' => $this->options,
                     );
                     if($index === 0){
                       $confs['master'] = $conf;
