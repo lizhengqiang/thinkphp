@@ -108,8 +108,7 @@ abstract class Driver
                     $this->options[PDO::ATTR_EMULATE_PREPARES] = false;
                 }
 
-
-                if(C('CONNECT_POOL') === true){
+                if(C('CONNECT_POOL') === true && $config['pool']){
                   $confs = array(
                       'slave' => array(
                       ),
@@ -120,10 +119,7 @@ abstract class Driver
                         'data_source' => $dsn,
                         'username' => $config['username'],
                         'pwd' => $config['password'],
-                        'options' => array(
-                           PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,
-                           PDO::ATTR_TIMEOUT => 3,
-                        ),
+                        'options' => $this->options,
                     );
                     if($index === 0){
                       $confs['master'] = $conf;
