@@ -110,7 +110,7 @@ abstract class Driver
                 
                 _log($linkNum . ':' . json_encode($this->config) . '->' . json_encode($confs) , 'connect', 'Db::Driver', 'CP');
 
-                if(C('CONNECT_POOL') === true && $config['pool']){
+                if(C('CONNECT_POOL') === true){
                   $confs = array(
                       'slave' => array(
                       ),
@@ -121,7 +121,10 @@ abstract class Driver
                         'data_source' => $dsn,
                         'username' => $config['username'],
                         'pwd' => $config['password'],
-                        'options' => $this->options,
+                        'options' => array(
+                           PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,
+                           PDO::ATTR_TIMEOUT => 3,
+                        ),
                     );
                     if($index === 0){
                       $confs['master'] = $conf;
