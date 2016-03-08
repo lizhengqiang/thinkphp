@@ -1211,7 +1211,7 @@ function redirect($url, $time = 0, $msg = '')
  * @param mixed $options 缓存参数
  * @return mixed
  */
-function S($name, $value = '', $option = null)
+function S($name, $value = '', $options = null)
 {
     /*
       $options = array(
