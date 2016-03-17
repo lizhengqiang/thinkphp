@@ -100,7 +100,25 @@ class MnsController extends Controller
         exit;
     }
 
+    public function G($tag)
+    {
+        if (!is_array($this->params["g"])) {
+            $this->params["g"] = array();
+        }
 
+        if (empty($this->params["g"][$tag])) {
+            G($tag . "-begin");
+            $this->params["g"][$tag] = "running";
+        } else {
+            G($tag . "-end");
+            $this->params["g"][$tag] = G($tag . "-begin", $tag . "-end");
+        }
+    }
+
+
+    /**
+     * @var QueueService
+     */
     public $queueService;
 
     public function _initialize()
