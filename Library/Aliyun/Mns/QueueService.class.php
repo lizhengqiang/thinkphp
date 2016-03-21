@@ -20,46 +20,49 @@ use AliyunMNS\Requests\BatchPeekMessageRequest;
 use AliyunMNS\Model\SendMessageRequestItem;
 use AliyunMNS\Requests\ListQueueRequest;
 
-class QueueService{
-  
-  private $client;
-  
-  public function __construct($accessId, $accessKey, $endPoint){
-    require(LIB_PATH . 'GuzzleHttp/Psr7/functions_include.php');
-    require(LIB_PATH . 'GuzzleHttp/Promise/functions_include.php');
-    require(LIB_PATH . 'GuzzleHttp/functions_include.php');
-    $this->client = new Client($endPoint, $accessId, $accessKey);
-  }
-  
-  public function sendMessage($messageBody, $queueName){
-    // create queue
-    $request = new CreateQueueRequest($queueName);
-    try{
-      $res = $this->client->createQueue($request);
-    }catch (MnsException $e){
-      dump($e);
-      return false;
-    }catch (QueueAlreadyExistException $e){
-      return false;
+class QueueService
+{
+
+    private $client;
+
+    public function __construct($accessId, $accessKey, $endPoint)
+    {
+        require(LIB_PATH . 'GuzzleHttp/Psr7/functions_include.php');
+        require(LIB_PATH . 'GuzzleHttp/Promise/functions_include.php');
+        require(LIB_PATH . 'GuzzleHttp/functions_include.php');
+        $this->client = new Client($endPoint, $accessId, $accessKey);
     }
-    
-    $queue = $this->client->getQueueRef($queueName);
-    
-    // send message
-    if(is_array($messageBody)){
-      $messageBody = json_encode($messageBody);
+
+    public function sendMessage($messageBody, $queueName)
+    {
+        // create queue
+        $request = new CreateQueueRequest($queueName);
+        try {
+            $res = $this->client->createQueue($request);
+        } catch (MnsException $e) {
+            //return false;
+        } catch (QueueAlreadyExistException $e) {
+            //return false;
+        }
+
+        $queue = $this->client->getQueueRef($queueName);
+
+        // send message
+        if (is_array($messageBody)) {
+            $messageBody = json_encode($messageBody);
+        }
+
+        // as the messageBody will be automatically encoded
+        // the MD5 is calculated for the encoded body
+        $bodyMD5 = md5(base64_encode($messageBody));
+        $request = new SendMessageRequest($messageBody);
+        try {
+            $res = $queue->sendMessage($request);
+            return $res;
+        } catch (MnsException $e) {
+            return $e;
+        }
     }
-    
-    // as the messageBody will be automatically encoded
-    // the MD5 is calculated for the encoded body
-    $bodyMD5 = md5(base64_encode($messageBody));
-    $request = new SendMessageRequest($messageBody);
-    try{
-      $res = $queue->sendMessage($request);
-      return $res;
-    }catch (MnsException $e){
-      return $e;
-    }
-  }
 }
+
 ?>
