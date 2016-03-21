@@ -100,6 +100,24 @@ class MnsController extends Controller
         exit;
     }
 
+    /**
+     * 新版本SPA要求的返回基础结构
+     * @param int $code
+     * @param string $msg
+     * @param null $crawlerData
+     * @param null $extraData
+     */
+    public function cR($code = 0, $msg = 'ok', $crawlerData = null, $extraData = null)
+    {
+        $this->ajaxReturn(array(
+            'code' => $code,
+            'msg' => $msg,
+            'crawlerData' => $crawlerData,
+            'extraData' => $extraData,
+        ));
+        exit;
+    }
+
     public function G($tag)
     {
         if (!is_array($this->params["g"])) {

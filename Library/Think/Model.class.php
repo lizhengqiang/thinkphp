@@ -75,7 +75,7 @@ class Model
     {
         // 模型初始化
         $this->_initialize();
-      
+
         // 获取模型名称
         if (!empty($name)) {
             if (strpos($name, '.')) {
@@ -100,6 +100,7 @@ class Model
         // 数据库初始化操作
         // 获取数据库操作对象
         // 当前模型有独立的数据库连接信息
+        _log(json_encode($this->connection), "_construct", "Model", "JAVA2");
         $this->db(0, empty($this->connection) ? $connection : $this->connection, true);
     }
 
@@ -116,7 +117,7 @@ class Model
             // 如果数据表字段没有定义则自动获取
             if (C('DB_FIELDS_CACHE')) {
                 $fields = F('_fields/' . strtolower($this->getTableName()));
-                
+
                 if ($fields) {
                     $this->fields = $fields;
                     if (!empty($fields['_pk'])) {
@@ -1596,10 +1597,13 @@ class Model
 
         if (!isset($this->_db[$linkNum]) || $force) {
             // 创建一个新的实例
+
+
             if (!empty($config) && is_string($config) && false === strpos($config, '/')) {
                 // 支持读取配置参数
                 $config = C($config);
             }
+
             $this->_db[$linkNum] = Db::getInstance($config);
         } elseif (null === $config) {
             $this->_db[$linkNum]->close(); // 关闭数据库连接

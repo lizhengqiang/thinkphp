@@ -72,7 +72,7 @@ class Memcached
      */
     public function read($sessID)
     {
-        _log($this->prefix.$this->sessionName . $sessID, 'read', 'Session::Memcached', 'T');
+        _log($this->prefix.$this->sessionName . $sessID, 'read', 'Session::Memcached', 'INFO');
         $sessData = $this->handle->get($this->prefix.$this->sessionName . $sessID);
         _log($sessData, 'read', 'Session::Memcached', 'T');
         $sessData = $this->prefix . '|' . serialize(json_decode($sessData, true));
