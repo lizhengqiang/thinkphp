@@ -40,7 +40,7 @@ function smarty_modifier_capitalize($string, $uc_digits = false, $lc_rest = fals
                 }
             } 
         }
-        $upper_string = preg_replace("!((^|\s)['\"])(\w)!ue", "stripslashes('\\1').mb_convert_case(stripslashes('\\3'),MB_CASE_UPPER, SMARTY_RESOURCE_CHAR_SET)", $upper_string);
+        $upper_string = preg_replace("!((^|\s)['\"])(\w)!uEditor", "stripslashes('\\1').mb_convert_case(stripslashes('\\3'),MB_CASE_UPPER, SMARTY_RESOURCE_CHAR_SET)", $upper_string);
         return $upper_string;
     }
     
@@ -58,7 +58,7 @@ function smarty_modifier_capitalize($string, $uc_digits = false, $lc_rest = fals
             }
         } 
     }
-    $upper_string = preg_replace("!((^|\s)['\"])(\w)!ue", "stripslashes('\\1').strtoupper(stripslashes('\\3'))", $upper_string);
+    $upper_string = preg_replace("!((^|\s)['\"])(\w)!uEditor", "stripslashes('\\1').strtoupper(stripslashes('\\3'))", $upper_string);
     return $upper_string;
 } 
 

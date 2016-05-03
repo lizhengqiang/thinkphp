@@ -83,7 +83,7 @@ class Smarty_Internal_Config_File_Compiler {
         if ($_content == '') {
             return true;
         }
-        // init the lexer/parser to compile the config file
+        // initUploader the lexer/parser to compile the config file
         $lex = new Smarty_Internal_Configfilelexer($_content, $this->smarty);
         $parser = new Smarty_Internal_Configfileparser($lex, $this);
         if ($this->smarty->_parserdebug) $parser->PrintTrace();
