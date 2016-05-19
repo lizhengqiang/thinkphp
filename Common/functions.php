@@ -9,14 +9,6 @@
 // | Author: liu21st <liu21st@gmail.com>
 // +----------------------------------------------------------------------
 /**
- * Mouge
- */
-function createOpenUrl($url)
-{
-    return $_SERVER['REQUEST_SCHEME'] . "://" . $_SERVER['HTTP_HOST'] . $url;
-}
-
-/**
  * Think 系统函数库
  */
 
