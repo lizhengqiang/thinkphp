@@ -37,6 +37,7 @@ class Db
             if ('mysqli' == $options['type']) {
                 $options['type'] = 'mysql';
             }
+
             // 如果采用lite方式 仅支持原生SQL 包括query和execute方法
             $class = !empty($options['lite']) ? 'Think\Db\Lite' : 'Think\\Db\\Driver\\' . ucwords(strtolower($options['type']));
             if (class_exists($class)) {
@@ -80,7 +81,6 @@ class Db
                 'slave_no'    => isset($config['db_slave_no']) ? $config['db_slave_no'] : '',
                 'debug'       => isset($config['db_debug']) ? $config['db_debug'] : APP_DEBUG,
                 'lite'        => isset($config['db_lite']) ? $config['db_lite'] : false,
-                'pool'        => isset($config['db_pool']) ? $config['db_pool'] : false,
             );
         } else {
             $config = array(
@@ -99,7 +99,6 @@ class Db
                 'slave_no'    => C('DB_SLAVE_NO'),
                 'debug'       => C('DB_DEBUG', null, APP_DEBUG),
                 'lite'        => C('DB_LITE'),
-                'pool'        => C('DB_POOL'),
             );
         }
         return $config;
@@ -126,7 +125,7 @@ class Db
             'password' => isset($info['pass']) ? $info['pass'] : '',
             'hostname' => isset($info['host']) ? $info['host'] : '',
             'hostport' => isset($info['port']) ? $info['port'] : '',
-            'database' => isset($info['path']) ? substr($info['path'], 1) : '',
+            'database' => isset($info['path']) ? ltrim($info['path'], '/') : '',
             'charset'  => isset($info['fragment']) ? $info['fragment'] : 'utf8',
         );
 

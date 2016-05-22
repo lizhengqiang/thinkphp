@@ -75,7 +75,6 @@ class Model
     {
         // 模型初始化
         $this->_initialize();
-
         // 获取模型名称
         if (!empty($name)) {
             if (strpos($name, '.')) {
@@ -94,13 +93,12 @@ class Model
         } elseif ('' != $tablePrefix) {
             $this->tablePrefix = $tablePrefix;
         } elseif (!isset($this->tablePrefix)) {
-            $this->tablePrefix = C('DB_PREFIX');
+            $this->tablePrefix = !empty($this->connection) && !is_null(C($this->connection.'.DB_PREFIX')) ? C($this->connection.'.DB_PREFIX') : C('DB_PREFIX');
         }
 
         // 数据库初始化操作
         // 获取数据库操作对象
         // 当前模型有独立的数据库连接信息
-        _log(json_encode($this->connection), "_construct", "Model", "JAVA2");
         $this->db(0, empty($this->connection) ? $connection : $this->connection, true);
     }
 
@@ -117,7 +115,6 @@ class Model
             // 如果数据表字段没有定义则自动获取
             if (C('DB_FIELDS_CACHE')) {
                 $fields = F('_fields/' . strtolower($this->getTableName()));
-
                 if ($fields) {
                     $this->fields = $fields;
                     if (!empty($fields['_pk'])) {
@@ -1104,6 +1101,15 @@ class Model
             $fields = $this->insertFields;
         } elseif (self::MODEL_UPDATE == $type && isset($this->updateFields)) {
             $fields = $this->updateFields;
+            $pk     = $this->getPk();
+            if (is_string($pk)) {
+                array_push($fields, $pk);
+            }
+            if (is_array($pk)) {
+                foreach ($pk as $pkTemp) {
+                    array_push($fields, $pkTemp);
+                }
+            }
         }
         if (isset($fields)) {
             if (is_string($fields)) {
@@ -1315,7 +1321,7 @@ class Model
                 // 判断是否需要执行验证
                 if (empty($val[5]) || (self::MODEL_BOTH == $val[5] && $type < 3) || $val[5] == $type) {
                     if (0 == strpos($val[2], '{%') && strpos($val[2], '}'))
-                    // 支持提示信息的多语言 使用 {%语言定义} 方式
+                        // 支持提示信息的多语言 使用 {%语言定义} 方式
                     {
                         $val[2] = L(substr($val[2], 2, -1));
                     }
@@ -1597,13 +1603,10 @@ class Model
 
         if (!isset($this->_db[$linkNum]) || $force) {
             // 创建一个新的实例
-
-
             if (!empty($config) && is_string($config) && false === strpos($config, '/')) {
                 // 支持读取配置参数
                 $config = C($config);
             }
-
             $this->_db[$linkNum] = Db::getInstance($config);
         } elseif (null === $config) {
             $this->_db[$linkNum]->close(); // 关闭数据库连接

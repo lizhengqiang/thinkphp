@@ -28,6 +28,8 @@ abstract class Driver
     protected $lastInsID = null;
     // 返回或者影响记录数
     protected $numRows = 0;
+    // 事物操作PDO实例
+    protected $transPDO = null;
     // 事务指令数
     protected $transTimes = 0;
     // 错误信息
@@ -65,7 +67,7 @@ abstract class Driver
     protected $executeTimes = 0;
     // PDO连接参数
     protected $options = array(
-        PDO::ATTR_CASE              => PDO::CASE_NATURAL,
+        PDO::ATTR_CASE              => PDO::CASE_LOWER,
         PDO::ATTR_ERRMODE           => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_ORACLE_NULLS      => PDO::NULL_NATURAL,
         PDO::ATTR_STRINGIFY_FETCHES => false,
@@ -93,7 +95,6 @@ abstract class Driver
      */
     public function connect($config = '', $linkNum = 0, $autoConnection = false)
     {
-      
         if (!isset($this->linkID[$linkNum])) {
             if (empty($config)) {
                 $config = $this->config;
@@ -107,32 +108,7 @@ abstract class Driver
                     // 禁用模拟预处理语句
                     $this->options[PDO::ATTR_EMULATE_PREPARES] = false;
                 }
-
-                if(C('CONNECT_POOL') === true && $config['pool']){
-                  $confs = array(
-                      'slave' => array(
-                      ),
-                  );
-                  $dsns = split(',', $config['dsn']);
-                  foreach($dsns as $index => $dsn){
-                    $conf = array(
-                        'data_source' => $dsn,
-                        'username' => $config['username'],
-                        'pwd' => $config['password'],
-                        'options' => $this->options,
-                    );
-                    if($index === 0){
-                      $confs['master'] = $conf;
-                    }else{
-                      $confs['slave'][''.$index] = $conf;
-                    }
-                  }
-                  
-                  $this->linkID[$linkNum] = new \pdo_connect_pool($confs);
-                  
-                }else{
-                  $this->linkID[$linkNum] = new PDO($config['dsn'], $config['username'], $config['password'], $this->options);
-                }
+                $this->linkID[$linkNum] = new PDO($config['dsn'], $config['username'], $config['password'], $this->options);
             } catch (\PDOException $e) {
                 if ($autoConnection) {
                     trace($e->getMessage(), '', 'ERR');
@@ -186,10 +162,8 @@ abstract class Driver
         if ($fetchSql) {
             return $this->queryStr;
         }
-        _log($this->queryStr, 'query', 'Db::Driver', 'CP');
         //释放前次的查询结果
         if (!empty($this->PDOStatement)) {
-            _log('free PDO statement', 'query', 'Db::Driver', 'CP');
             $this->free();
         }
 
@@ -197,9 +171,7 @@ abstract class Driver
         N('db_query', 1); // 兼容代码
         // 调试开始
         $this->debug(true);
-        _log('before prepare', 'query', 'Db::Driver', 'CP');
         $this->PDOStatement = $this->_linkID->prepare($str);
-        _log('after prepare', 'query', 'Db::Driver', 'CP');
         if (false === $this->PDOStatement) {
             $this->error();
             return false;
@@ -213,9 +185,7 @@ abstract class Driver
         }
         $this->bind = array();
         try {
-            _log('before execute', 'query', 'Db::Driver', 'CP');
             $result = $this->PDOStatement->execute();
-            _log('after execute:' . json_encode($result), 'query', 'Db::Driver', 'CP');
             // 调试结束
             $this->debug(false);
             if (false === $result) {
@@ -308,6 +278,8 @@ abstract class Driver
 
         //数据rollback 支持
         if (0 == $this->transTimes) {
+            // 记录当前操作PDO
+            $this->transPdo = $this->_linkID;
             $this->_linkID->beginTransaction();
         }
         $this->transTimes++;
@@ -321,13 +293,17 @@ abstract class Driver
      */
     public function commit()
     {
-        if ($this->transTimes > 0) {
-            $result           = $this->_linkID->commit();
+        if ($this->transTimes == 1) {
+            // 由嵌套事物的最外层进行提交
+            $result = $this->_linkID->commit();
             $this->transTimes = 0;
+            $this->transPdo = null;
             if (!$result) {
                 $this->error();
                 return false;
             }
+        } else {
+            $this->transTimes--;
         }
         return true;
     }
@@ -340,8 +316,9 @@ abstract class Driver
     public function rollback()
     {
         if ($this->transTimes > 0) {
-            $result           = $this->_linkID->rollback();
+            $result = $this->_linkID->rollback();
             $this->transTimes = 0;
+            $this->transPdo = null;
             if (!$result) {
                 $this->error();
                 return false;
@@ -439,18 +416,18 @@ abstract class Driver
     protected function parseSet($data)
     {
         foreach ($data as $key => $val) {
-            if (is_array($val) && 'exp' == $val[0]) {
+            if (isset($val[0]) && 'exp' == $val[0]) {
                 $set[] = $this->parseKey($key) . '=' . $val[1];
             } elseif (is_null($val)) {
                 $set[] = $this->parseKey($key) . '=NULL';
             } elseif (is_scalar($val)) {
                 // 过滤非标量数据
                 if (0 === strpos($val, ':') && in_array($val, array_keys($this->bind))) {
-                    $set[] = $this->parseKey($key) . '=' . $this->escapeString($val);
+                    $set[] = $this->parseKey($key) . '=' . $val;
                 } else {
                     $name  = count($this->bind);
-                    $set[] = $this->parseKey($key) . '=:' . $name;
-                    $this->bindParam($name, $val);
+                    $set[] = $this->parseKey($key) . '=:' . $key . '_' . $name;
+                    $this->bindParam($key . '_' . $name, $val);
                 }
             }
         }
@@ -475,7 +452,7 @@ abstract class Driver
      * @param string $key
      * @return string
      */
-    protected function parseKey(&$key)
+    protected function parseKey($key)
     {
         return $key;
     }
@@ -554,8 +531,7 @@ abstract class Driver
             }
             $tables = $array;
         } elseif (is_string($tables)) {
-            $tables = explode(',', $tables);
-            array_walk($tables, array(&$this, 'parseKey'));
+            $tables = array_map(array($this, 'parseKey'), explode(',', $tables));
         }
         return implode(',', $tables);
     }
@@ -931,7 +907,7 @@ abstract class Driver
         $this->model = $options['model'];
         $this->parseBind(!empty($options['bind']) ? $options['bind'] : array());
         foreach ($data as $key => $val) {
-            if (is_array($val) && 'exp' == $val[0]) {
+            if (isset($val[0]) && 'exp' == $val[0]) {
                 $fields[] = $this->parseKey($key);
                 $values[] = $val[1];
             } elseif (is_null($val)) {
@@ -941,11 +917,11 @@ abstract class Driver
                 // 过滤非标量数据
                 $fields[] = $this->parseKey($key);
                 if (0 === strpos($val, ':') && in_array($val, array_keys($this->bind))) {
-                    $values[] = $this->parseValue($val);
+                    $values[] = $val;
                 } else {
                     $name     = count($this->bind);
-                    $values[] = ':' . $name;
-                    $this->bindParam($name, $val);
+                    $values[] = ':' . $key . '_' . $name;
+                    $this->bindParam($key . '_' . $name, $val);
                 }
             }
         }
@@ -983,11 +959,11 @@ abstract class Driver
                     $value[] = 'NULL';
                 } elseif (is_scalar($val)) {
                     if (0 === strpos($val, ':') && in_array($val, array_keys($this->bind))) {
-                        $value[] = $this->parseValue($val);
+                        $value[] = $val;
                     } else {
                         $name    = count($this->bind);
-                        $value[] = ':' . $name;
-                        $this->bindParam($name, $val);
+                        $value[] = ':' . $key . '_' . $name;
+                        $this->bindParam($key . '_' . $name, $val);
                     }
                 }
             }
@@ -1014,8 +990,8 @@ abstract class Driver
             $fields = explode(',', $fields);
         }
 
-        array_walk($fields, array($this, 'parseKey'));
-        $sql = 'INSERT INTO ' . $this->parseTable($table) . ' (' . implode(',', $fields) . ') ';
+        $fields = array_map(array($this, 'parseKey'), $fields);
+        $sql    = 'INSERT INTO ' . $this->parseTable($table) . ' (' . implode(',', $fields) . ') ';
         $sql .= $this->buildSelectSql($options);
         return $this->execute($sql, !empty($options['fetch_sql']) ? true : false);
     }
@@ -1041,7 +1017,7 @@ abstract class Driver
         if (!strpos($table, ',')) {
             //  单表更新支持order和lmit
             $sql .= $this->parseOrder(!empty($options['order']) ? $options['order'] : '')
-            . $this->parseLimit(!empty($options['limit']) ? $options['limit'] : '');
+                . $this->parseLimit(!empty($options['limit']) ? $options['limit'] : '');
         }
         $sql .= $this->parseComment(!empty($options['comment']) ? $options['comment'] : '');
         return $this->execute($sql, !empty($options['fetch_sql']) ? true : false);
@@ -1070,7 +1046,7 @@ abstract class Driver
         if (!strpos($table, ',')) {
             // 单表删除支持order和limit
             $sql .= $this->parseOrder(!empty($options['order']) ? $options['order'] : '')
-            . $this->parseLimit(!empty($options['limit']) ? $options['limit'] : '');
+                . $this->parseLimit(!empty($options['limit']) ? $options['limit'] : '');
         }
         $sql .= $this->parseComment(!empty($options['comment']) ? $options['comment'] : '');
         return $this->execute($sql, !empty($options['fetch_sql']) ? true : false);
@@ -1221,16 +1197,20 @@ abstract class Driver
      */
     protected function initConnect($master = true)
     {
-      _log($master === true ? 'true' : 'false' . ':' . $this->config['deploy'], 'initConnect', 'Db::Driver', 'CP');
+        // 开启事物时用同一个连接进行操作
+        if ($this->transPDO) {
+            return $this->transPDO;
+        }
+
         if (!empty($this->config['deploy']))
-        // 采用分布式数据库
+            // 采用分布式数据库
         {
             $this->_linkID = $this->multiConnect($master);
         } else
-        // 默认单数据库
-        if (!$this->_linkID) {
-            $this->_linkID = $this->connect();
-        }
+            // 默认单数据库
+            if (!$this->_linkID) {
+                $this->_linkID = $this->connect();
+            }
 
     }
 
@@ -1256,7 +1236,7 @@ abstract class Driver
         if ($this->config['rw_separate']) {
             // 主从式采用读写分离
             if ($master)
-            // 主服务器写入
+                // 主服务器写入
             {
                 $r = $m;
             } else {
@@ -1293,7 +1273,6 @@ abstract class Driver
             'dsn'      => isset($_config['dsn'][$r]) ? $_config['dsn'][$r] : $_config['dsn'][0],
             'charset'  => isset($_config['charset'][$r]) ? $_config['charset'][$r] : $_config['charset'][0],
         );
-        _log(json_encode($db_config) . ':' . $r .','.$m, 'multiConnect', 'Db::Driver', 'CP');
         return $this->connect($db_config, $r, $r == $m ? false : $db_master);
     }
 
