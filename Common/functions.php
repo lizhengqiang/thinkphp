@@ -12,6 +12,23 @@
  * Think 系统函数库
  */
 
+function _G($name)
+{
+    return G($name, $name . "_");
+}
+
+function _GB($name)
+{
+    G($name);
+    _log("Start: " . _G($name) . "s", $name, "Benchmark", "DEBUG");
+}
+
+function _GE($name)
+{
+    G($name . "_");
+    _log("Completed: " . _G($name) . "s", $name, "Benchmark", "DEBUG");
+}
+
 /**
  * 获取和设置配置参数 支持批量定义
  * @param string|array $name 配置变量
@@ -1196,6 +1213,35 @@ function redirect($url, $time = 0, $msg = '')
     }
 }
 
+function Mem($name, $value = '', $options = null)
+{
+    _GB("Mem");
+    static $cache = '';
+    if (empty($cache)) {
+        // 自动初始化
+        $cache = Think\Cache::getInstance("File", array());
+    }
+    if ('' === $value) {
+        // 获取缓存
+        $r = $cache->get($name);
+        _GE("Mem");
+        return $r;
+    } elseif (is_null($value)) {
+        // 删除缓存
+        _GE("Mem");
+        return $cache->rm($name);
+    } else {
+        // 缓存数据
+        if (is_array($options)) {
+            $expire = isset($options['expire']) ? $options['expire'] : null;
+        } else {
+            $expire = is_numeric($options) ? $options : null;
+        }
+        $r = $cache->set($name, $value, $expire);
+        _GE("Mem");
+        return $r;
+    }
+}
 /**
  * 缓存管理
  * @param mixed $name 缓存名称，如果为数组表示进行缓存设置
@@ -1283,7 +1329,7 @@ function S($name, $value = '', $options = null)
 
       return $result;
     */
-
+    _GB("S");
     static $cache = '';
     if (is_array($options)) {
         // 缓存操作的同时初始化
@@ -1293,6 +1339,7 @@ function S($name, $value = '', $options = null)
         // 缓存初始化
         $type = isset($name['type']) ? $name['type'] : '';
         $cache = Think\Cache::getInstance($type, $name);
+        _GE("S");
         return $cache;
     } elseif (empty($cache)) {
         // 自动初始化
@@ -1304,9 +1351,12 @@ function S($name, $value = '', $options = null)
             $name = str_replace("lite::", "", $name);
             return $cache->liteGet($name);
         }
-        return $cache->get($name);
+        $r = $cache->get($name);
+        _GE("S");
+        return $r;
     } elseif (is_null($value)) {
         // 删除缓存
+        _GE("S");
         return $cache->rm($name);
     } else {
         // 缓存数据
@@ -1315,7 +1365,9 @@ function S($name, $value = '', $options = null)
         } else {
             $expire = is_numeric($options) ? $options : null;
         }
-        return $cache->set($name, $value, $expire);
+        $r = $cache->set($name, $value, $expire);
+        _GE("S");
+        return $r;
     }
 }
 
