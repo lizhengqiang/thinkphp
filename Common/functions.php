@@ -12,21 +12,30 @@
  * Think 系统函数库
  */
 
+
 function _G($name)
 {
     return G($name, $name . "_");
 }
 
+function _GW($c)
+{
+    static $gWidth;
+    $gWidth = $gWidth + $c;
+    return $gWidth;
+}
+
 function _GB($name)
 {
     G($name);
-    _log("Start: " . _G($name) . "s", $name, "Benchmark", "DEBUG");
+    _log("----------------------------Start", str_pad($name, 50 - _GW(8), "#", STR_PAD_LEFT), "Benchmark", "DEBUG");
 }
 
 function _GE($name)
 {
     G($name . "_");
-    _log("Completed: " . _G($name) . "s", $name, "Benchmark", "DEBUG");
+    _log("----------------------------Completed: " . _G($name) . "s", str_pad($name, 50 - _GW(0), "#", STR_PAD_LEFT), "Benchmark", "DEBUG");
+    _GW(-8);
 }
 
 /**
@@ -1215,12 +1224,16 @@ function redirect($url, $time = 0, $msg = '')
 
 function Mem($name, $value = '', $options = null)
 {
-    _GB("Mem");
+
+
     static $cache = '';
     if (empty($cache)) {
         // 自动初始化
+        _GB("MemInstance");
         $cache = Think\Cache::getInstance("File", array());
+        _GE("MemInstance");
     }
+    _GB("Mem");
     if ('' === $value) {
         // 获取缓存
         $r = $cache->get($name);
@@ -1242,6 +1255,7 @@ function Mem($name, $value = '', $options = null)
         return $r;
     }
 }
+
 /**
  * 缓存管理
  * @param mixed $name 缓存名称，如果为数组表示进行缓存设置
