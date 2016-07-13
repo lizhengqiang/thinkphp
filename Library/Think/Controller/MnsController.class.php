@@ -168,7 +168,7 @@ class MnsController extends Controller
                 'tag' => $queueName,
                 'method' => 'post',
                 'url' => $url,
-                'data' => urlencode($params),
+                'data' => $params,
             );
         } else {
             $messageBody = array(
